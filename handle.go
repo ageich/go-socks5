@@ -8,6 +8,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/things-go/go-socks5/statute"
 )
@@ -223,6 +224,12 @@ func (sf *Server) handleAssociate(ctx context.Context, writer io.Writer, request
 		return fmt.Errorf("failed to send reply, %v", err)
 	}
 
+	// Получаем таймаут из конфига сервера (по умолчанию 30 секунд)
+	readTimeout := sf.udpReadTimeout
+	if readTimeout == 0 {
+		readTimeout = 30 * time.Second
+	}
+
 	sf.goFunc(func() {
 		// read from client and write to remote server
 		conns := sync.Map{}
@@ -240,11 +247,17 @@ func (sf *Server) handleAssociate(ctx context.Context, writer io.Writer, request
 			})
 		}()
 		for {
+			_ = bindLn.SetReadDeadline(time.Now().Add(readTimeout))
+
 			n, srcAddr, err := bindLn.ReadFromUDP(bufPool[:cap(bufPool)])
 			if err != nil {
 				if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
 					return
 				}
+				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+					continue
+				}
+				sf.logger.Errorf("read from client failed, %v", err)
 				continue
 			}
 			pk, err := statute.ParseDatagram(bufPool[:n])
@@ -279,11 +292,16 @@ func (sf *Server) handleAssociate(ctx context.Context, writer io.Writer, request
 					}()
 
 					for {
+						_ = targetNew.SetReadDeadline(time.Now().Add(readTimeout))
+
 						buf := bufPool[:cap(bufPool)]
 						n, err := targetNew.Read(buf)
 						if err != nil {
 							if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
 								return
+							}
+							if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+								continue
 							}
 							sf.logger.Errorf("read data from remote %s failed, %v", addrString(targetNew.RemoteAddr()), err)
 							return
@@ -322,12 +340,18 @@ func (sf *Server) handleAssociate(ctx context.Context, writer io.Writer, request
 	defer sf.bufferPool.Put(buf)
 
 	for {
+		if tcpConn, ok := request.Reader.(net.Conn); ok {
+			_ = tcpConn.SetReadDeadline(time.Now().Add(readTimeout))
+		}
+
 		_, err := request.Reader.Read(buf[:cap(buf)])
-		// sf.logger.Errorf("read data from client %s, %d bytesm, err is %+v", request.RemoteAddr.String(), num, err)
 		if err != nil {
 			bindLn.Close() // nolint: errcheck
 			if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
 				return nil
+			}
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				continue
 			}
 			return err
 		}
