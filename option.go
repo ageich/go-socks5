@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"time"
 
 	"github.com/things-go/go-socks5/bufferpool"
 )
@@ -173,5 +174,13 @@ func WithAssociateMiddleware(m Middleware) Option {
 func WithUseBindIpBaseResolveAsUdpAddr(b bool) Option {
 	return func(s *Server) {
 		s.useBindIpBaseResolveAsUdpAddr = b
+	}
+}
+
+// WithUDPReadTimeout sets the read timeout for UDP ASSOCIATE operations.
+// Default is 30 seconds if not set.
+func WithUDPReadTimeout(timeout time.Duration) Option {
+	return func(s *Server) {
+		s.udpReadTimeout = timeout
 	}
 }
