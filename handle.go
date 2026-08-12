@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/things-go/go-socks5/statute"
+	"github.com/ageich/go-socks5/statute"
 )
 
 // AddressRewriter is used to rewrite a destination transparently

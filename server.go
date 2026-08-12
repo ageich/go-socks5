@@ -11,8 +11,8 @@ import (
 	"net"
 	"time" // <-- ДОБАВЛЕН ИМПОРТ
 
-	"github.com/things-go/go-socks5/bufferpool"
-	"github.com/things-go/go-socks5/statute"
+	"github.com/ageich/go-socks5/bufferpool"
+	"github.com/ageich/go-socks5/statute"
 )
 
 // GPool is used to implement custom goroutine pool default use goroutine

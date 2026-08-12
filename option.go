@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/things-go/go-socks5/bufferpool"
+	"github.com/ageich/go-socks5/bufferpool"
 )
 
 // Option user's option
