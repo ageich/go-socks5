@@ -43,11 +43,12 @@ type Server struct {
 	rewriter AddressRewriter
 	// bindIP is used for bind or udp associate
 	bindIP net.IP
+
+	// udpReadTimeout is the read timeout for UDP ASSOCIATE operations.
+	udpReadTimeout time.Duration
 	// useBindIpResolveAsUdpAddr is used to resolve bindIP as udp address
 	// default false, use  &net.UDPAddr{IP: request.LocalAddr.(*net.TCPAddr).IP, Port: 0}
 	useBindIpBaseResolveAsUdpAddr bool
-	// udpReadTimeout — таймаут на чтение для UDP ASSOCIATE (добавлено)
-	udpReadTimeout               time.Duration // <-- ДОБАВЛЕНО ПОЛЕ
 	// logger can be used to provide a custom log target.
 	// Defaults to io.Discard.
 	logger Logger

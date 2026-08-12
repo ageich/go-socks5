@@ -255,7 +255,8 @@ func (sf *Server) handleAssociate(ctx context.Context, writer io.Writer, request
 					return
 				}
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-					continue
+					// UDP ASSOCIATE idle timeout: terminate the association.
+					return
 				}
 				sf.logger.Errorf("read from client failed, %v", err)
 				continue
@@ -301,7 +302,8 @@ func (sf *Server) handleAssociate(ctx context.Context, writer io.Writer, request
 								return
 							}
 							if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-								continue
+								// Remote UDP flow idle timeout: close this flow.
+								return
 							}
 							sf.logger.Errorf("read data from remote %s failed, %v", addrString(targetNew.RemoteAddr()), err)
 							return
